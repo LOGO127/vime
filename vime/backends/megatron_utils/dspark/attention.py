@@ -86,7 +86,7 @@ class DSparkRotaryEmbedding(nn.Module):
         # Add head dim for broadcasting: [bsz, 1, seq_len, head_dim]
         cos = cos.unsqueeze(1)
         sin = sin.unsqueeze(1)
-        return cos.to(position_ids.dtype), sin.to(position_ids.dtype)
+        return cos, sin
 
 
 class DSparkParallelAttention(nn.Module):
@@ -169,6 +169,8 @@ class DSparkParallelAttention(nn.Module):
         # Apply rotary embeddings
         # position_ids: [bsz, ctx_len + q_len]
         cos, sin = self.rotary_emb(position_ids)
+        cos = cos.to(dtype=q.dtype)
+        sin = sin.to(dtype=q.dtype)
         # cos/sin: [1, 1, seq_len, head_dim] but we need to match k's shape
         # k shape: [bsz, kv_heads, kv_len, head_dim]
         # cos shape: [1, 1, kv_len, head_dim] -> broadcast over bsz and heads
